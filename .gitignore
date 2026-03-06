@@ -1,0 +1,13 @@
+# Ignore the virtual environment
+venv/
+__pycache__/
+
+# Ignore your dataset folders
+GTSRB_MiniPrj/
+Positive_Directions/
+Prohibitive_signs/
+Speed_Limit/
+Warnings/
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
