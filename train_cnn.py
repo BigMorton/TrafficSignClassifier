@@ -10,6 +10,26 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 # Skip Stage 2 feature extraction
 from data_pipeline import load_and_preprocess
 
+import random
+
+def lock_random_seeds(seed_value=42):
+    #Forces Python, NumPy, and PyTorch to use the exact same random numbers every time.
+    #This guarantees 100% reproducibility for the report.
+    print(f"Locking all random seeds to {seed_value}...")
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    torch.manual_seed(seed_value)
+    
+    # Lock GPU seeds
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed_value)
+        torch.cuda.manual_seed_all(seed_value)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+# Call the function immediately before the script does anything else!
+lock_random_seeds(42)
+
 # Define CNN Architecture (3 Convolutional Layers)
 class TrafficSignCNN(nn.Module):
     def __init__(self):
@@ -150,3 +170,35 @@ if __name__ == "__main__":
         plt.title("Confusion Matrix: CNN")
         plt.tight_layout()
         plt.show()
+
+        print("\nFinding Misclassified Images...")
+    
+        misclassified_indices = []
+        for i in range(len(all_targets)):
+            if all_targets[i] != all_preds[i]:
+                misclassified_indices.append(i)
+                
+        print(f"Total mistakes made by CNN: {len(misclassified_indices)}")
+        
+        if len(misclassified_indices) > 0:
+            # Plot up to 4 mistakes in a 2x2 grid
+            fig, axes = plt.subplots(2, 2, figsize=(10, 10))
+            axes = axes.flatten()
+            
+            for i in range(min(4, len(misclassified_indices))):
+                idx = misclassified_indices[i]
+                
+                # Get the original image (OpenCV format) and the predicted/true labels
+                wrong_image = X_test[idx]
+                true_label = class_names[all_targets[idx]]
+                guessed_label = class_names[all_preds[idx]]
+                
+                # Plot it
+                axes[i].imshow(wrong_image)
+                axes[i].set_title(f"True: {true_label}\nGuessed: {guessed_label}", color="red")
+                axes[i].axis('off')
+                
+            plt.suptitle("CNN Misclassified Images", fontsize=16)
+            plt.tight_layout()
+            plt.show()
+
